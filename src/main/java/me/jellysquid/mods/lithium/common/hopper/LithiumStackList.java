@@ -21,6 +21,7 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
     private int fullSlots;
 
     LithiumDoubleStackList parent; //only used for double chests
+    private boolean alwaysChanged; //only used for inventories that can unexpectedly change their behavior
 
     public LithiumStackList(DefaultedList<ItemStack> original, int maxCountPerStack) {
         //noinspection unchecked
@@ -54,6 +55,9 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
         this.cachedSignalStrength = -1;
     }
     public long getModCount() {
+        if (this.alwaysChanged) {
+            this.modCount++;
+        }
         return this.modCount;
     }
 
@@ -74,16 +78,10 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
                 }
                 //noinspection ConstantConditions
                 ((StorableItemStack) (Object) stack).unregisterFromInventory(this);
-            }
-        }
-        for (int i = 0; i < size; i++) {
-            ItemStack stack = this.get(i);
-            if (!stack.isEmpty()) {
                 //noinspection ConstantConditions
                 ((StorableItemStack) (Object) stack).registerToInventory(this, i);
             }
         }
-
     }
 
     public void beforeSlotCountChange(int slot, int newCount) {
@@ -91,7 +89,7 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
         int count = stack.getCount();
         if (newCount <= 0) {
             //noinspection ConstantConditions
-            ((StorableItemStack) (Object) stack).unregisterFromInventory(this, slot);
+            ((StorableItemStack) (Object) stack).unregisterFromInventory(this);
         }
         int maxCount = stack.getMaxCount();
         this.occupiedSlots -= newCount <= 0 ? 1 : 0;
@@ -115,7 +113,7 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
         ItemStack previous = super.set(index, element);
         if (previous != element) {
             //noinspection ConstantConditions
-            ((StorableItemStack) (Object) previous).unregisterFromInventory(this, index);
+            ((StorableItemStack) (Object) previous).unregisterFromInventory(this);
             if (!element.isEmpty()) {
                 //noinspection ConstantConditions
                 ((StorableItemStack) (Object) element).registerToInventory(this, index);
@@ -143,7 +141,7 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
     public ItemStack remove(int index) {
         ItemStack previous = super.remove(index);
         //noinspection ConstantConditions
-        ((StorableItemStack) (Object) previous).unregisterFromInventory(this, index);
+        ((StorableItemStack) (Object) previous).unregisterFromInventory(this);
         this.changedALot();
         return previous;
     }
@@ -151,11 +149,12 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
     @Override
     public void clear() {
         int size = this.size();
+        //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < size; i++) {
             ItemStack stack = this.get(i);
             if (!stack.isEmpty()) {
                 //noinspection ConstantConditions
-                ((StorableItemStack) (Object) stack).unregisterFromInventory(this, i);
+                ((StorableItemStack) (Object) stack).unregisterFromInventory(this);
             }
         }
         super.clear();
@@ -227,6 +226,11 @@ public class LithiumStackList extends DefaultedList<ItemStack> implements Lithiu
 
     public int getFullSlots() {
         return this.fullSlots;
+    }
+
+    @Override
+    public void setUnstableInteractionConditions() {
+        this.alwaysChanged = true;
     }
 
     @Override

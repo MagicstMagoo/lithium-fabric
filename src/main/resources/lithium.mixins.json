@@ -167,8 +167,7 @@
     "world.inline_block_access.WorldMixin",
     "world.inline_height.WorldChunkMixin",
     "world.inline_height.WorldMixin",
-    "world.player_chunk_tick.ThreadedAnvilChunkStorageMixin",
-    "world.tick_scheduler.ChunkTickSchedulerMixin",
+    "world.player_chunk_tick.ThreadedAnvilChunkStorageMixin"
   ],
   "client": [
     "chunk.entity_class_groups.ClientEntityManagerAccessor",
